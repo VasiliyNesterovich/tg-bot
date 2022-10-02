@@ -12,15 +12,16 @@ from middlewares import AccessMiddleware
 from inline_keyboard import TODAY, MONTH, EXPENSES, CATEGORIES, ALL
 
 
+
 logging.basicConfig(level=logging.INFO)
 
 # API_TOKEN = os.getenv("TELEGRAM_API_TOKEN")
 API_TOKEN = "5739568300:AAEfr1V8gMIgVR0MHCb3TIHK7U3TGwTXdyQ"
 # ACCESS_ID = os.getenv("TELEGRAM_ACCESS_ID")
-ACCESS_ID = 357607331
+# ACCESS_ID = 357607331
 bot = Bot(token=API_TOKEN)
 dp = Dispatcher(bot)
-dp.middleware.setup(AccessMiddleware(ACCESS_ID))
+# dp.middleware.setup(AccessMiddleware(ACCESS_ID))
 
 
 @dp.message_handler(commands=['start', 'help'])
@@ -94,14 +95,14 @@ async def list_expenses(message: types.Message):
     """Отправляет последние несколько записей о расходах"""
     last_expenses = expenses.last()
     if not last_expenses:
-        await message.answer("Расходы ещё не заведены")
+        await message.answer("Нет ни одной суммы.")
         return
-
+    
     last_expenses_rows = [
         f"{expense.amount} руб. на {expense.category_name} — нажми "
         f"/del{expense.id} для удаления"
         for expense in last_expenses]
-    answer_message = "Последние сохранённые траты:\n\n* " + "\n\n* "\
+    answer_message = "Последние внесенные суммы:\n\n* " + "\n\n* "\
             .join(last_expenses_rows)
     await message.answer(answer_message, reply_markup=EXPENSES)
 
@@ -111,14 +112,14 @@ async def callback_list_expenses(callback_query):
     await bot.answer_callback_query(callback_query.id)
     last_expenses = expenses.last()
     if not last_expenses:
-        await bot.send_message(callback_query.from_user.id, text="Расходы ещё не заведены")
+        await bot.send_message(callback_query.from_user.id, text="Нет ни одной суммы.")
         return
 
     last_expenses_rows = [
         f"{expense.amount} руб. на {expense.category_name} — нажми "
         f"/del{expense.id} для удаления"
         for expense in last_expenses]
-    answer_message = "Последние сохранённые траты:\n\n* " + "\n\n* "\
+    answer_message = "Последние внесенные суммы:\n\n* " + "\n\n* "\
             .join(last_expenses_rows)
     await bot.send_message(callback_query.from_user.id, text=answer_message, reply_markup=EXPENSES)
 
@@ -132,7 +133,7 @@ async def add_expense(message: types.Message):
         await message.answer(str(e))
         return
     answer_message = (
-        f"Добавлены траты {expense.amount} руб на {expense.category_name}.\n\n"
+        f"Добавлена сумма {expense.amount} руб на {expense.category_name}.\n\n"
         f"{expenses.get_today_statistics()}")
     await message.answer(answer_message, reply_markup=ALL)
 

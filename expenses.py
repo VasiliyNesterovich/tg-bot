@@ -59,9 +59,8 @@ def get_today_statistics() -> str:
     result = cursor.fetchone()
     base_today_expenses = result[0] if result[0] else 0
     return (f"Расходы сегодня:\n"
-            f"всего — {all_today_expenses} руб.\n"
-            f"базовые — {base_today_expenses} руб. из {_get_budget_limit()} руб.\n\n"
-            f"За текущий месяц: /month")
+            f"Всего — {all_today_expenses} руб.\n"
+            f"Норма в день — {base_today_expenses} руб. из {_get_budget_limit()} руб.\n\n")
 
 
 def get_month_statistics() -> str:
@@ -82,8 +81,8 @@ def get_month_statistics() -> str:
     result = cursor.fetchone()
     base_today_expenses = result[0] if result[0] else 0
     return (f"Расходы в текущем месяце:\n"
-            f"всего — {all_today_expenses} руб.\n"
-            f"базовые — {base_today_expenses} руб. из "
+            f"Всего — {all_today_expenses} руб.\n"
+            f"Норма — {base_today_expenses} руб. из "
             f"{now.day * _get_budget_limit()} руб.")
 
 
@@ -111,8 +110,7 @@ def _parse_message(raw_message: str) -> Message:
     if not regexp_result or not regexp_result.group(0) \
             or not regexp_result.group(1) or not regexp_result.group(2):
         raise exceptions.NotCorrectMessage(
-            "Не могу понять сообщение. Напишите сообщение в формате, "
-            "например:\n5 такси")
+            "Неправильный формат сообщения.\nВведите округленную сумму до целого, например:\n5 такси")
 
     amount = regexp_result.group(1).replace(" ", "")
     category_text = regexp_result.group(2).strip().lower()
