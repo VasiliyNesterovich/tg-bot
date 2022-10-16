@@ -1,5 +1,4 @@
 """ Работа с расходами — их добавление, удаление, статистики"""
-# -*- coding: utf-8 -*-
 import datetime
 import re
 from typing import List, NamedTuple, Optional
@@ -30,6 +29,7 @@ class Expense(NamedTuple):
 def add_expense(raw_message: str) -> Expense:
     """Добавляет новое сообщение.
     Принимает на вход текст сообщения, пришедшего в бот."""
+    db.check_db_exists()
     parsed_message = _parse_message(raw_message)
     category = Categories().get_category(
         parsed_message.category_text)
@@ -46,6 +46,7 @@ def add_expense(raw_message: str) -> Expense:
 
 def get_today_statistics() -> str:
     """Возвращает строкой статистику расходов за сегодня"""
+    db.check_db_exists()
     cursor = db.get_cursor()
     cursor.execute("select sum(amount) from expense where date(created)=date('now', 'localtime')")
     result = cursor.fetchone()
@@ -65,6 +66,7 @@ def get_today_statistics() -> str:
 
 def get_month_statistics() -> str:
     """Возвращает строкой статистику расходов за текущий месяц"""
+    db.check_db_exists()
     now = _get_now_datetime()
     first_day_of_month = f'{now.year:04d}-{now.month:02d}-01'
     cursor = db.get_cursor()
@@ -88,6 +90,7 @@ def get_month_statistics() -> str:
 
 def last() -> List[Expense]:
     """Возвращает последние несколько расходов"""
+    db.check_db_exists()
     cursor = db.get_cursor()
     cursor.execute(
         "select e.id, e.amount, c.name "
@@ -101,16 +104,19 @@ def last() -> List[Expense]:
 
 def delete_expense(row_id: int) -> None:
     """Удаляет сообщение по его идентификатору"""
+    db.check_db_exists()
     db.delete("expense", row_id)
 
 
 def _parse_message(raw_message: str) -> Message:
     """Парсит текст пришедшего сообщения о новом расходе."""
-    regexp_result = re.match(r"([\d ]+) (.*)", raw_message)
+    # regexp_result = re.match(r"([\d ]+) (.*)", raw_message)
+    regexp_result = re.match(r"([\d|\d.\d|\d,\d ]+) (.*)", raw_message)
     if not regexp_result or not regexp_result.group(0) \
             or not regexp_result.group(1) or not regexp_result.group(2):
         raise exceptions.NotCorrectMessage(
-            "Неправильный формат сообщения.\nВведите округленную сумму до целого, например:\n5 такси")
+            "Неправильный формат сообщения.\nВведите округленную сумму до целого, например:\n5 такси\n\
+Или через точку, например:\n5.5 такси")
 
     amount = regexp_result.group(1).replace(" ", "")
     category_text = regexp_result.group(2).strip().lower()
@@ -131,4 +137,5 @@ def _get_now_datetime() -> datetime.datetime:
 
 def _get_budget_limit() -> int:
     """Возвращает дневной лимит трат для основных базовых трат"""
+    db.check_db_exists()
     return db.fetchall("budget", ["daily_limit"])[0]["daily_limit"]
